@@ -139,7 +139,8 @@ poly_t *new_poly_from_string(const char *s)
         // Term exponent
         if (*cpy == 'x')
         {
-            if (*++cpy == '^')
+            cpy++;
+            if (*cpy == '^')
             {
                 cpy++;
                 t->exp = str_nextint(cpy, &step);
