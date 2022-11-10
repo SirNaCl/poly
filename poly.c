@@ -29,7 +29,7 @@ struct term_t
 
 struct poly_t
 {
-    term_t *next;
+    term_t *first;
 };
 
 int str_nextint(const char *s, int *step)
@@ -60,8 +60,8 @@ void free_term(term_t *t)
  */
 void insert_term(poly_t *p, term_t *t)
 {
-    term_t *n = p->next;
-    term_t *prev;
+    term_t *n = p->first;
+    term_t *prev = NULL;
 
     // Loop until we find correct location in polynomial
     while (n && t->exp <= n->exp)
@@ -76,7 +76,7 @@ void insert_term(poly_t *p, term_t *t)
         if (prev->exp == t->exp)
         {
             prev->coef += t->coef;
-            free_term(t);
+            free(t);
         }
         else
         {
@@ -86,23 +86,30 @@ void insert_term(poly_t *p, term_t *t)
     }
     else // First insertion or new largest
     {
-        p->next = t;
-        t->next = NULL;
+        t->next = p->first;
+        p->first = t;
     }
 }
 
 poly_t *new_poly_from_string(const char *s)
 {
-    poly_t *p = (poly_t *)malloc(sizeof(poly_t));
-    p->next = NULL;
+    poly_t *p = (poly_t *)calloc(1, sizeof(poly_t));
+    p->first = NULL;
 
     const char *cpy = s;
     int negative = 0;
     int step = 0;
+
+    // Starts with dash as in -55x^189 - 140x^130 - 703x^35 + 653x^20
+    if (*cpy == '-')
+    {
+        negative = 1;
+        cpy++;
+    }
+
     while (strlen(cpy) > 0)
     {
-        negative = 0; // used to check if next coefficient should be negative
-        term_t *t = (term_t *)malloc(sizeof(term_t));
+        term_t *t = (term_t *)calloc(1, sizeof(term_t));
         t->next = NULL;
         t->coef = 0;
         t->exp = 0;
@@ -119,10 +126,12 @@ poly_t *new_poly_from_string(const char *s)
         // Term has coefficient
         if (isdigit(*cpy))
         {
-            t->coef = str_nextint(cpy, &step);
-            cpy += step;
             if (negative)
-                t->coef = -t->coef;
+                t->coef = -str_nextint(cpy, &step);
+            else
+                t->coef = str_nextint(cpy, &step);
+
+            cpy += step;
         }
         else
             t->coef = 1;
@@ -130,8 +139,7 @@ poly_t *new_poly_from_string(const char *s)
         // Term exponent
         if (*cpy == 'x')
         {
-            cpy++;
-            if (*cpy == '^')
+            if (*++cpy == '^')
             {
                 cpy++;
                 t->exp = str_nextint(cpy, &step);
@@ -140,6 +148,7 @@ poly_t *new_poly_from_string(const char *s)
             else
                 t->exp = 1;
         }
+
         insert_term(p, t);
         negative = 0;
     }
@@ -149,14 +158,15 @@ poly_t *new_poly_from_string(const char *s)
 
 void free_poly(poly_t *p)
 {
-    if (p->next)
-        free_term(p->next);
+    if (p->first)
+        free_term(p->first);
+
     free(p);
 }
 
 term_t *mul_terms(term_t *t1, term_t *t2)
 {
-    term_t *r = (term_t *)malloc(sizeof(term_t));
+    term_t *r = (term_t *)calloc(1, sizeof(term_t));
     r->next = NULL;
     r->coef = t1->coef * t2->coef;
     r->exp = t1->exp + t2->exp;
@@ -166,14 +176,14 @@ term_t *mul_terms(term_t *t1, term_t *t2)
 poly_t *mul(poly_t *p1, poly_t *p2)
 {
     term_t *t1, *t2;
-    poly_t *r = (poly_t *)malloc(sizeof(poly_t));
+    poly_t *r = (poly_t *)calloc(1, sizeof(poly_t));
 
-    r->next = NULL;
-    t1 = p1->next;
+    r->first = NULL;
+    t1 = p1->first;
 
     while (t1)
     {
-        t2 = p2->next;
+        t2 = p2->first;
         while (t2)
         {
             insert_term(r, mul_terms(t1, t2));
@@ -187,7 +197,7 @@ poly_t *mul(poly_t *p1, poly_t *p2)
 
 void print_poly(poly_t *p)
 {
-    term_t *n = p->next;
+    term_t *n = p->first;
 
     while (n)
     {

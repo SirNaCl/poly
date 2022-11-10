@@ -1,5 +1,5 @@
 CC	= cc
-CFLAGS	= -std=c11 -pedantic -Wall -Werror -g -O3 -funsigned-char
+CFLAGS	= -std=c18 -pedantic -Wall -Werror -g -Os -funsigned-char
 OUT	= a.out
 FILE	= poly
 
