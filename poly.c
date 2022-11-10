@@ -38,10 +38,12 @@ int str_nextint(const char *s, int *step)
     while (isdigit(*(s + l)))
         l++;
 
-    char r[l];
+    char *r = (char *)calloc(l, sizeof(char *));
     strncpy(r, s, l);
     *step = l;
-    return atoi(r);
+    l = atoi(r);
+    free(r);
+    return l;
 }
 
 void free_term(term_t *t)
@@ -91,12 +93,13 @@ void insert_term(poly_t *p, term_t *t)
     }
 }
 
+// FIXME: Om exponenten är tvåsiffrig så gör den sig själv tresiffrig genom att ta coefficientens tredje siffra
 poly_t *new_poly_from_string(const char *s)
 {
     poly_t *p = (poly_t *)calloc(1, sizeof(poly_t));
     p->first = NULL;
 
-    const char *volatile cpy = s;
+    const char *cpy = s;
     int negative = 0;
     int step = 0;
 
@@ -152,6 +155,7 @@ poly_t *new_poly_from_string(const char *s)
 
         insert_term(p, t);
         negative = 0;
+        step = 0;
     }
 
     return p;
