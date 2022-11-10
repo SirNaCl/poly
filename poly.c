@@ -96,7 +96,7 @@ poly_t *new_poly_from_string(const char *s)
     poly_t *p = (poly_t *)calloc(1, sizeof(poly_t));
     p->first = NULL;
 
-    const volatile char *cpy = s;
+    const char *volatile cpy = s;
     int negative = 0;
     int step = 0;
 
